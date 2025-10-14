@@ -42,7 +42,6 @@ Preencha com:
 
 TOKEN=SEU_TOKEN_DO_BOT
 CLIENT_ID=SEU_CLIENT_ID
-GUILD_ID=SEU_GUILD_ID
 
 🛠 Estrutura de pastas
 src/
@@ -65,7 +64,7 @@ Sempre que adicionar ou alterar comandos, rode:
 npm run deploy
 
 
-Isso registra os comandos no servidor de teste definido no .env (GUILD_ID).
+Isso registra os comandos nos servidores.
 
 🤖 Rodando o bot
 npm run dev

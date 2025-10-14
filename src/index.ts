@@ -15,7 +15,7 @@ async function startBot() {
   await loadCommands(client);
   await loadEvents(client);
 
-  client.login(process.env.DISCORD_TOKEN);
+  client.login(process.env.TOKEN);
 }
 
 startBot();

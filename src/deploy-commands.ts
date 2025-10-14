@@ -1,42 +1,52 @@
-import { REST, Routes } from "discord.js";
-import { config } from "./config";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v10";
+import { config } from "dotenv";
 import fs from "fs";
 import path from "path";
 
-const commands: any[] = [];
-const commandsPath = path.join(__dirname, "commands");
+config(); // Carrega .env
 
-function getAllCommandFiles(dir: string, files: string[] = []): string[] {
-  const items = fs.readdirSync(dir, { withFileTypes: true });
-  for (const item of items) {
-    if (item.isDirectory()) {
-      getAllCommandFiles(path.join(dir, item.name), files);
-    } else if (item.name.endsWith(".ts") || item.name.endsWith(".js")) {
-      files.push(path.join(dir, item.name));
+const CLIENT_ID = process.env.CLIENT_ID!;
+const TOKEN = process.env.TOKEN!;
+
+// Função recursiva para ler comandos em subpastas
+function loadCommands(dir: string): any[] {
+  const commands: any[] = [];
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    const stats = fs.statSync(fullPath);
+
+    if (stats.isDirectory()) {
+      commands.push(...loadCommands(fullPath));
+    } else if (file.endsWith(".ts") || file.endsWith(".js")) {
+      const command = require(fullPath);
+      if ("data" in command && "execute" in command) {
+        commands.push(command.data.toJSON());
+      }
     }
   }
-  return files;
+
+  return commands;
 }
 
-const commandFiles = getAllCommandFiles(commandsPath);
+// Carrega todos os comandos da pasta commands
+const commandsPath = path.join(__dirname, "commands");
+const commands = loadCommands(commandsPath);
 
-for (const file of commandFiles) {
-  const command = require(file);
-  if ("data" in command && "execute" in command) {
-    commands.push(command.data.toJSON());
-  }
-}
-
-const rest = new REST({ version: "10" }).setToken(config.token);
+const rest = new REST({ version: "10" }).setToken(TOKEN);
 
 (async () => {
   try {
-    console.log("🔄 Atualizando comandos...");
+    console.log(`🚀 Registrando ${commands.length} comandos globais...`);
+
     await rest.put(
-      Routes.applicationGuildCommands(config.clientId, config.guildId),
-      { body: commands },
+      Routes.applicationCommands(CLIENT_ID), // GLOBAL
+      { body: commands }
     );
-    console.log(`✅ ${commands.length} comandos registrados!`);
+
+    console.log("✅ Comandos globais registrados!");
   } catch (error) {
     console.error(error);
   }
